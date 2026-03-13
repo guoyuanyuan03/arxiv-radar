@@ -1,0 +1,19 @@
+# arXiv 学术前沿追踪配置文件
+
+Agentic RL:
+  categories: "(cat:cs.CL+OR+cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.MA)"
+  # 高精度版：直接锁定核心算法与专有名词
+  high_precision: '(?i)\b(Agentic\s*RL|RLHF|RLAIF|GRPO|DPO|KTO|PPO|Reward\s*Model(ing)?|Preference\s*Optimization|Reinforcement\s*Learning\s*from\s*(Human|AI)\s*Feedback|Trajectory\s*Optimization|Q-Star|Actor-Critic|Policy\s*Gradient)\b'
+  # 交叉组合版：Agent 概念 + RL 概念的双重命中
+  high_recall: '(?i)(?=.*\b(agent(s|ic)?|llm(s)?|lmm(s)?|foundation\s*model(s)?|reasoning|planning|tool\s*use|embodied)\b)(?=.*\b(rl|reinforcement\s*learning|reward|policy|trajectory|q-learning|value\s*function|actor-critic|preference)\b).*'
+
+OPSD_and_Self_Improvement:
+  categories: "(cat:cs.CL+OR+cat:cs.AI+OR+cat:cs.LG)"
+  high_precision: '(?i)\b(On-Policy\s*Self[- ]Distill(ation|ed)|OPSD|Self[- ]Distill(ation|ed)\s*(Policy|Reasoner)?|SDPO|Self[- ]Taught\s*Reasoner|STaR|On[- ]Policy\s*Distillation|Implicit\s*Reward(s)?|Reasoning\s*Compression)\b'
+  high_recall: '(?i)(?=.*\b(llm(s)?|lmm(s)?|language\s*model(s)?|foundation\s*model(s)?|reasoning|cot|chain[- ]of[- ]thought)\b)(?=.*\b(self[- ]distillation|on[- ]policy|self[- ]training|teacher[- ]student|distill(ation|ed)?|self[- ]reward(ing)?|self[- ]correction|self[- ]reflection|online\s*learning)\b).*'
+
+# 可以随时在这里解除注释并添加新的方向
+# LLM Efficiency:
+#   categories: "(cat:cs.CL+OR+cat:cs.LG)"
+#   high_precision: '(?i)\b(Quantization|LoRA|QLoRA|vLLM|PagedAttention|FlashAttention)\b'
+#   high_recall: ''
