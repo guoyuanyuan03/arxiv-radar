@@ -53,10 +53,14 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
     # 2.2 构建 arXiv API 请求 URL (按提交时间倒序排列)
     date_query = f"submittedDate:[{start_api_str}+TO+{end_api_str}]"
     url = f"http://export.arxiv.org/api/query?search_query={categories}+AND+{date_query}&sortBy=submittedDate&sortOrder=descending&max_results={max_results}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    }
+    req = urllib.request.Request(url, headers=headers)
     
     try:
         # 解析 RSS feed
-        response = urllib.request.urlopen(url).read()
+        response = urllib.request.urlopen(req).read()
         feed = feedparser.parse(response)
     except Exception as e:
         print(f"❌ 请求 arXiv API 失败: {e}")
