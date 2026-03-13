@@ -30,4 +30,4 @@ jobs:
       env:
         FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
       run: |
-        python arxiv_radar.py
+        python arxiv_tracker.py
