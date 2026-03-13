@@ -44,7 +44,7 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
     start_api_str = start_dt.strftime("%Y%m%d%H%M%S")
     end_api_str = end_dt.strftime("%Y%m%d%H%M%S")
 
-    # print(f"🔍 正在向 arXiv 请求 {topic_name} 相关论文数据...")
+    print(f"🔍 正在向 arXiv 请求 {topic_name} 相关论文数据...")
     
     # === 2. 构建 arXiv API 查询请求 ===
     # 2.1 设定搜索范围：涵盖 NLP、机器学习、人工智能和多智能体系统
@@ -99,7 +99,7 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
             })
 
     # # === 5. 打印预览信息 ===
-    # print(f"\n✅ 扫描完毕！在获取到的 {len(feed.entries)} 篇论文中，共发现 {len(matched_papers)} 篇 Agentic RL 强相关论文:\n")
+    # print(f"\n✅ 扫描完毕！在获取到的 {len(feed.entries)} 篇论文中，共发现 {len(matched_papers)} 篇强相关论文:\n")
     # print("-" * 60)
     
     # for i, paper in enumerate(matched_papers, 1):
