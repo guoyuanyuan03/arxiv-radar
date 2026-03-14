@@ -200,5 +200,7 @@ if __name__ == "__main__":
             all_results[topic_name] = papers
             
     # 3. 推送飞书 (合并所有主题的结果)
-    if webhook_url and all_results:
+    if webhook_url:
         send_to_feishu(webhook_url, all_results, days_to_check)
+    else:
+        print("\n⚠️ 环境变量未配置：未找到 FEISHU_WEBHOOK，跳过飞书推送。")
