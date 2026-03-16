@@ -54,7 +54,8 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
     date_query = f"submittedDate:[{start_api_str}+TO+{end_api_str}]"
     url = f"http://export.arxiv.org/api/query?search_query={categories}+AND+{date_query}&sortBy=submittedDate&sortOrder=descending&max_results={max_results}"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+        'User-Agent': 'ArxivRadarBot/1.0 (mailto:gyy20030303@163.com)', 
+        'Accept': 'application/atom+xml, text/xml, */*'
     }
     req = urllib.request.Request(url, headers=headers)
     
@@ -103,7 +104,7 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
             })
 
     # # === 5. 打印预览信息 ===
-    # print(f"\n✅ 扫描完毕！在获取到的 {len(feed.entries)} 篇论文中，共发现 {len(matched_papers)} 篇强相关论文:\n")
+    print(f"\n✅ 扫描完毕！在获取到的 {len(feed.entries)} 篇论文中，共发现 {len(matched_papers)} 篇 {topic_name} 强相关论文\n")
     # print("-" * 60)
     
     # for i, paper in enumerate(matched_papers, 1):
