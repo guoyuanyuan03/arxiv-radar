@@ -35,10 +35,12 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
         List[Dict], 匹配到的 arXiv 论文列表
     """
     # === 1. 设定时间范围 ===
-    now_utc = datetime.datetime.now(timezone.utc)
-    target_date = (now_utc - timedelta(days=days_back)).date()
-    start_dt = datetime.datetime.combine(target_date, datetime.time.min, tzinfo=timezone.utc)
-    end_dt = datetime.datetime.combine(target_date, datetime.time.max, tzinfo=timezone.utc)
+    # now_utc = datetime.datetime.now(timezone.utc)
+    now = datetime.datetime.now(TIMEZONE)
+    start_date = (now - timedelta(days=days_back)).date()
+    end_date = (now - timedelta(days=1)).date()
+    start_dt = datetime.datetime.combine(start_date, datetime.time.min, tzinfo=TIMEZONE).astimezone(timezone.utc)
+    end_dt = datetime.datetime.combine(end_date, datetime.time.max, tzinfo=TIMEZONE).astimezone(timezone.utc)
 
     # 转换为 arXiv API 要求的格式: YYYYMMDDHHMMSS
     start_api_str = start_dt.strftime("%Y%m%d%H%M%S")
@@ -53,8 +55,9 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
     # 2.2 构建 arXiv API 请求 URL (按提交时间倒序排列)
     date_query = f"submittedDate:[{start_api_str}+TO+{end_api_str}]"
     url = f"http://export.arxiv.org/api/query?search_query={categories}+AND+{date_query}&sortBy=submittedDate&sortOrder=descending&max_results={max_results}"
+    bot_email = os.environ.get("BOT_EMAIL", "researcher@example.com")
     headers = {
-        'User-Agent': 'ArxivRadarBot/1.0 (mailto:gyy20030303@163.com)', 
+        'User-Agent': f'ArxivRadarBot/1.0 (mailto:{bot_email})', 
         'Accept': 'application/atom+xml, text/xml, */*'
     }
     req = urllib.request.Request(url, headers=headers)
@@ -117,21 +120,24 @@ def fetch_arxiv_papers(topic_name: str, topic_config: Dict, days_back: int = 1, 
     return matched_papers
 
 
-def send_to_feishu(webhook_url: str, papers_dict: Dict[str, List[Dict]], days_back: int = 1):
+def send_to_feishu(webhook_url: str, papers_dict: Dict[str, List[Dict]], time_label: str, weekday: int):
     """
     将筛选出的 arXiv 论文格式化为 Markdown 并推送到飞书
     Args:
         webhook_url: str, 飞书群聊机器人的 webhook 地址
         papers_dict: Dict[str, List[Dict]], 按研究主题分类，匹配到的 arXiv 论文
-        days_back: int, 扫描的天数，默认为 1 天
+        time_label: str, 抓取时间范围标签
+        weekday: int, 0 -> Monday, 1 -> Tuesday, ...
     """
-    date_label = (datetime.datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
     if not papers_dict:
-        content = f"✅ **今日 arXiv 扫描完毕 ({date_label})**\n未发现您关注领域的前沿论文。今天可以不用刷论文，好好休息一下啦~~"
+        if weekday in [6, 0]:  # 周日/周一
+            content = f"✅ **今日 arXiv 扫描完毕 ({time_label})**\n受 arXiv 周末停更影响，今日暂无新论文。上一批次的更新可能还在缓冲索引中，安心享受周末或专心跑实验吧！"
+        else:
+            content = f"✅ **今日 arXiv 扫描完毕 ({time_label})**\n未发现您关注领域的前沿论文。今天可以不用刷论文，好好休息一下啦~~"
         header_color = "green"
     else:
         num_papers = sum([len(papers) for papers in papers_dict.values()])
-        content = f"🔥 **今日共发现 {num_papers} 篇前沿论文！({date_label})**\n\n"
+        content = f"🔥 **今日共发现 {num_papers} 篇前沿论文！({time_label})**\n\n"
         header_color = "blue"
         for topic, papers in papers_dict.items():
             # 主题块标题
@@ -179,6 +185,16 @@ def send_to_feishu(webhook_url: str, papers_dict: Dict[str, List[Dict]], days_ba
         print(f"✅ 飞书推送成功！服务器响应: {response.read().decode('utf-8')}")
     except Exception as e:
         print(f"❌ 飞书推送失败: {e}")
+
+
+def run_scan(days: int) -> Dict[str, List]:
+    results = {}
+    for topic_name, topic_config in RESEARCH_TOPICS.items():
+        print(f"🔍 正在扫描主题: {topic_name} (过去 {days} 日)")
+        papers = fetch_arxiv_papers(topic_name, topic_config, days_to_check)
+        if papers:
+            results[topic_name] = papers
+    return results
     
 
 if __name__ == "__main__":
@@ -186,22 +202,32 @@ if __name__ == "__main__":
     webhook_url = os.environ.get("FEISHU_WEBHOOK")
     days_to_check = 1
 
+    # 新增：硬编码北京时区 (UTC+8)
+    TIMEZONE = timezone(timedelta(hours=8))  # UTC: timezone.utc
+
+    # 新增：获取星期信息
+    now = datetime.datetime.now(TIMEZONE)
+    weekday = now.weekday()  # 0 -> 周一, 1 -> 周二, ...
+
     RESEARCH_TOPICS = load_config("config.yaml")
     if not RESEARCH_TOPICS:
         print("未加载到任何研究主题配置，程序退出。")
         exit()
     
     # 2. 遍历配置字典中的所有研究方向
-    all_results = {}
-    for topic_name, topic_config in RESEARCH_TOPICS.items():
-        print(f"🔍 正在扫描主题: {topic_name}")
-        # 这里调用上一轮写的 fetch_papers_by_topic 函数
-        papers = fetch_arxiv_papers(topic_name, topic_config, days_to_check)
-        if papers:
-            all_results[topic_name] = papers
+    # 第一轮：常规抓取（仅限昨日）
+    all_results = run_scan(days=days_to_check)
+
+    # 第二轮：如果今日是周二，且第一轮未抓取到任何论文，则自动扩大搜索范围到过去 3 天（涵盖上周六到本周一的积压）
+    if weekday == 1 and not all_results:
+        print(f"💡 检测到今日是周二，第一轮未抓取到新论文，触发周末延迟回溯机制 (扩大搜索范围至过去 3 日)...")
+        days_to_check = 3
+        all_results = run_scan(days=days_to_check)
             
     # 3. 推送飞书 (合并所有主题的结果)
+    target_date_str = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+    time_label = f"{(now - timedelta(days=days_to_check)).strftime('%Y-%m-%d')} 至 {target_date_str}" if days_to_check != 1 else target_date_str
     if webhook_url:
-        send_to_feishu(webhook_url, all_results, days_to_check)
+        send_to_feishu(webhook_url, all_results, time_label, weekday)
     else:
         print("\n⚠️ 环境变量未配置：未找到 FEISHU_WEBHOOK，跳过飞书推送。")

@@ -29,5 +29,6 @@ jobs:
     - name: 运行学术雷达并推送到飞书
       env:
         FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+        BOT_EMAIL: ${{ secrets.BOT_EMAIL }}
       run: |
         python arxiv_tracker.py
