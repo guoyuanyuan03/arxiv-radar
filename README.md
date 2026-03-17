@@ -24,4 +24,3 @@ Agentic RL:
   categories: "(cat:cs.CL+OR+cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.MA)"
   high_precision: '(?i)\b(Agentic\s*RL|RLHF|RLAIF|GRPO|DPO|KTO|PPO|Reward\s*Model(ing)?)\b'
   high_recall: '(?i)(?=.*\b(agent(s|ic)?|llm(s)?)\b)(?=.*\b(rl|reward|policy|preference)\b).*'
-  
